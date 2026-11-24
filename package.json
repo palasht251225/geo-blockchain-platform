@@ -1,0 +1,11 @@
+{
+  "name": "geo-blockchain-platform",
+  "version": "1.0.0",
+  "description": "Blockchain-Based Geo-Tagging Platform with Cryptographic Ledger, Spatial Query Engine and Interactive Map",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}
