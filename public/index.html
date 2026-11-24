@@ -27,14 +27,14 @@
       <div class="header-left">
         <div class="app-logo">
           <div class="logo-box">
-            <i class="fa-solid fa-map-location-dot"></i>
+            <i class="fa-solid fa-earth-americas"></i>
           </div>
           <div class="logo-text">
             <div class="logo-title">
               GeoLedger
-              <span class="craft-tag">v2.4</span>
+              <span class="craft-tag">GLOBAL</span>
             </div>
-            <div class="logo-tagline">Blockchain Geo-Tagging Platform</div>
+            <div class="logo-tagline">Global Geo-Tagging & Verified Climate Ledger</div>
           </div>
         </div>
       </div>
@@ -77,32 +77,43 @@
           
           <!-- Compact Floating Control Bar -->
           <div class="floating-control-bar">
+            <!-- Global Region Quick Fly-To -->
+            <div class="bar-regions">
+              <span class="region-label"><i class="fa-solid fa-globe"></i> Scope:</span>
+              <button class="region-chip active" data-region="global"><i class="fa-solid fa-earth-americas"></i> Global View</button>
+              <button class="region-chip" data-region="india">🇮🇳 India</button>
+              <button class="region-chip" data-region="europe">🇪🇺 Europe</button>
+              <button class="region-chip" data-region="north-america">🇺🇸 N. America</button>
+              <button class="region-chip" data-region="asia-pacific">🌏 Asia-Pac</button>
+              <button class="region-chip" data-region="me-africa">🌍 ME & Africa</button>
+            </div>
+
             <!-- Search Input -->
             <div class="bar-search">
               <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" id="quickSearchInput" placeholder="Search city or landmark (Delhi, Mumbai, London...)" />
+              <input type="text" id="quickSearchInput" placeholder="Search eco sites, cities (Lodhi, Bhadla, Central Park, London...)" />
             </div>
 
             <!-- Quick Category Filter Chips -->
             <div class="bar-chips">
-              <button class="chip active" data-cat="All">All Pins (521)</button>
-              <button class="chip" data-cat="Environmental Sensor"><i class="fa-solid fa-seedling"></i> Eco Sensors</button>
+              <button class="chip active" data-cat="All">All Pins (520)</button>
+              <button class="chip" data-cat="Environmental Sensor"><i class="fa-solid fa-leaf text-emerald"></i> 🌿 Eco-Friendly</button>
               <button class="chip" data-cat="Land Registry"><i class="fa-solid fa-file-contract"></i> Land Registry</button>
               <button class="chip" data-cat="Supply Chain & Logistics"><i class="fa-solid fa-truck"></i> Logistics</button>
-              <button class="chip" data-cat="Critical Infrastructure"><i class="fa-solid fa-bolt"></i> Infrastructure</button>
+              <button class="chip" data-cat="Critical Infrastructure"><i class="fa-solid fa-bolt"></i> Clean Energy & Infra</button>
               <button class="chip" data-cat="Cultural Heritage"><i class="fa-solid fa-monument"></i> Heritage</button>
             </div>
 
             <!-- Proximity Radar Slider -->
             <div class="bar-radar">
               <span class="radar-label"><i class="fa-solid fa-circle-dot"></i> Radar:</span>
-              <input type="range" id="radiusSlider" min="20" max="1500" value="150" step="10">
-              <span class="radar-val" id="radiusValDisplay">150 km</span>
+              <input type="range" id="radiusSlider" min="20" max="2500" value="300" step="20">
+              <span class="radar-val" id="radiusValDisplay">300 km</span>
               <span class="latency-badge" id="liveSearchLatency">0.24 ms</span>
             </div>
 
             <button class="btn btn-outline-sm" id="btnTogglePinMode">
-              <i class="fa-solid fa-location-crosshairs"></i> Pin Drop Mode
+              <i class="fa-solid fa-location-crosshairs"></i> Tag Pin
             </button>
           </div>
 

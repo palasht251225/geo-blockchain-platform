@@ -46,11 +46,14 @@ document.addEventListener('DOMContentLoaded', () => {
    1. MAP INITIALIZATION & CONTROLS
    ========================================================================== */
 function initMap() {
-  // Center near New Delhi / Global Hub
+  // Global View by default (revealing all continents worldwide)
   state.map = L.map('leafletMap', {
     zoomControl: false,
-    attributionControl: false
-  }).setView([state.radarCenter.lat, state.radarCenter.lng], 5);
+    attributionControl: false,
+    minZoom: 2,
+    maxZoom: 19,
+    worldCopyJump: true
+  }).setView([20.0, 15.0], 2.5);
 
   // Position zoom controls in top-left
   L.control.zoom({ position: 'topleft' }).addTo(state.map);
@@ -84,17 +87,17 @@ function initMap() {
   // Initial full load
   loadAllRecordsOnMap();
 
-  // Load Official Sovereign India Boundary Layer (Survey of India Standards)
+  // Load Sovereign Survey of India Boundary Layer with balanced, elegant styling
   fetch('/india_boundary.geojson')
     .then(res => res.json())
     .then(geoJsonData => {
       L.geoJSON(geoJsonData, {
         style: {
-          color: '#818cf8',
-          weight: 2.8,
-          opacity: 0.95,
+          color: '#6366f1',
+          weight: 1.6,
+          opacity: 0.65,
           fillColor: '#6366f1',
-          fillOpacity: 0.05
+          fillOpacity: 0.02
         }
       }).addTo(state.map);
       console.log('[Map] Official Survey of India complete boundary layer active.');
@@ -116,8 +119,10 @@ function initMap() {
     } else {
       // Reposition Radar Center
       state.radarCenter = { lat, lng };
-      document.getElementById('radarLat').innerText = lat.toFixed(4);
-      document.getElementById('radarLng').innerText = lng.toFixed(4);
+      const latEl = document.getElementById('radarLat');
+      const lngEl = document.getElementById('radarLng');
+      if (latEl) latEl.innerText = lat.toFixed(4);
+      if (lngEl) lngEl.innerText = lng.toFixed(4);
       updateRadarCircle();
       runSpatialQuery();
     }
@@ -139,7 +144,15 @@ function updateRadarCircle() {
   }).addTo(state.map);
 }
 
-function createCustomPin(color) {
+function createCustomPin(color, category) {
+  if (category === 'Environmental Sensor') {
+    return L.divIcon({
+      className: 'custom-pin-wrapper eco-pin',
+      html: `<div class="eco-friendly-pin" title="Verified Eco-Friendly Station"><i class="fa-solid fa-leaf"></i></div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    });
+  }
   return L.divIcon({
     className: 'custom-pin-wrapper',
     html: `<div class="custom-geo-pin" style="background-color: ${color}; color: ${color};"></div>`,
@@ -165,21 +178,46 @@ function renderMarkers(records) {
   state.markerLayer.clearLayers();
 
   records.forEach(rec => {
-    const color = CATEGORY_COLORS[rec.category] || '#6366f1';
+    const isEco = rec.category === 'Environmental Sensor';
+    const color = isEco ? '#10b981' : (CATEGORY_COLORS[rec.category] || '#6366f1');
     const marker = L.marker([rec.latitude, rec.longitude], {
-      icon: createCustomPin(color)
+      icon: createCustomPin(color, rec.category)
     });
 
-    // Sleek tooltip on hover
-    marker.bindTooltip(`
+    const eco = rec.metadata?.ecoMetrics;
+    const tooltipContent = isEco ? `
+      <div style="font-family: var(--font-sans); padding: 4px; min-width: 190px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+          <span style="background:rgba(16,185,129,0.2); color:#10b981; font-size:9px; font-weight:800; padding:2px 6px; border-radius:4px; border:1px solid rgba(16,185,129,0.4);">
+            🌿 ECO SENSOR
+          </span>
+          <span style="font-size:9px; color:#94a3b8; font-weight:600;">${rec.metadata?.nearestCity || ''}</span>
+        </div>
+        <strong style="color:#fff; font-size:12px; display:block; margin-top:5px; line-height:1.3;">${rec.title}</strong>
+        ${eco ? `
+          <div style="margin-top:5px; font-size:10px; color:#a7f3d0; background:rgba(16,185,129,0.15); padding:4px 6px; border-radius:4px; display:flex; justify-content:space-between;">
+            <span>AQI: <strong>${eco.aqi}</strong> (${eco.aqiStatus})</span>
+            <span>PM2.5: <strong>${eco.pm25}</strong></span>
+          </div>
+          <div style="margin-top:3px; font-size:9px; color:#6ee7b7;">
+            🌲 ${eco.carbonAbsorption}
+          </div>
+        ` : ''}
+        <div style="color:#64748b; font-size:9px; font-family:var(--font-mono); margin-top:4px;">
+          📍 [${rec.latitude.toFixed(4)}, ${rec.longitude.toFixed(4)}]
+        </div>
+      </div>
+    ` : `
       <div style="font-family: var(--font-sans); padding: 2px;">
         <strong style="color:#fff; font-size:11px;">${rec.title}</strong>
         <div style="color:${color}; font-size:9px; font-weight:700; margin-top:2px;">${rec.category}</div>
-        <div style="color:#94a3b8; font-size:9px; font-family:var(--font-mono); margin-top:2px;">[${rec.latitude.toFixed(4)}, ${rec.longitude.toFixed(4)}]</div>
+        <div style="color:#94a3b8; font-size:9px; font-family:var(--font-mono); margin-top:2px;">📍 [${rec.latitude.toFixed(4)}, ${rec.longitude.toFixed(4)}] • ${rec.metadata?.nearestCity || ''}</div>
       </div>
-    `, {
+    `;
+
+    marker.bindTooltip(tooltipContent, {
       direction: 'top',
-      offset: [0, -8],
+      offset: isEco ? [0, -14] : [0, -8],
       className: 'human-leaflet-tooltip'
     });
 
@@ -276,14 +314,64 @@ function openRecordDrawer(rec) {
   state.selectedRecord = rec;
   const drawer = document.getElementById('recordDrawer');
   const content = document.getElementById('drawerContent');
-  const color = CATEGORY_COLORS[rec.category] || '#00f2fe';
+  const isEco = rec.category === 'Environmental Sensor' || rec.metadata?.ecoFriendly;
+  const color = isEco ? '#10b981' : (CATEGORY_COLORS[rec.category] || '#00f2fe');
+  const eco = rec.metadata?.ecoMetrics;
+
+  let ecoHtml = '';
+  if (isEco && eco) {
+    ecoHtml = `
+      <div class="card-nested" style="margin-bottom: 14px; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.06);">
+        <div class="group-title">
+          <span style="color: #10b981; font-weight:700;"><i class="fa-solid fa-leaf"></i> Eco-Telemetry & Environmental Impact</span>
+          <span class="micro-badge" style="background: rgba(16, 185, 129, 0.25); color: #10b981;">VERIFIED GREEN</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+          <div style="background: rgba(0,0,0,0.35); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Air Quality Index</div>
+            <div style="font-size: 15px; font-weight: 800; color: #10b981; margin-top: 2px;">
+              AQI ${eco.aqi} <span style="font-size: 10px; color: #a7f3d0; font-weight: 600;">(${eco.aqiStatus})</span>
+            </div>
+          </div>
+          <div style="background: rgba(0,0,0,0.35); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Particulate PM2.5</div>
+            <div style="font-size: 15px; font-weight: 800; color: #38bdf8; margin-top: 2px;">
+              ${eco.pm25}
+            </div>
+          </div>
+          <div style="background: rgba(0,0,0,0.35); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Carbon Absorption</div>
+            <div style="font-size: 13px; font-weight: 800; color: #34d399; margin-top: 2px;">
+              ${eco.carbonAbsorption}
+            </div>
+          </div>
+          <div style="background: rgba(0,0,0,0.35); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase;">Power Source</div>
+            <div style="font-size: 12px; font-weight: 700; color: #facc15; margin-top: 2px;">
+              ${eco.powerSource}
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 8px; font-size: 11px; color: var(--text-dim); display: flex; justify-content: space-between; border-top: 1px solid rgba(16, 185, 129, 0.2); padding-top: 6px;">
+          <span>Ecosystem: <strong style="color: #fff;">${eco.ecosystemType}</strong></span>
+          <span>Station: <strong style="color: #10b981;">Online & Active</strong></span>
+        </div>
+      </div>
+    `;
+  }
 
   content.innerHTML = `
     <div style="margin-bottom: 16px;">
-      <span class="badge" style="background:${color}22; color:${color}; border-color:${color}55;">${rec.category}</span>
+      <span class="badge" style="background:${color}22; color:${color}; border-color:${color}55;">
+        ${isEco ? '🌿 Eco-Friendly Sensor' : rec.category}
+      </span>
       <h3 style="font-size: 18px; margin-top: 8px; font-weight: 800;">${rec.title}</h3>
-      <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">ID: <strong style="color:#fff;">${rec.id}</strong></div>
+      <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">
+        ID: <strong style="color:#fff;">${rec.id}</strong> • Region: <strong style="color:#fff;">${rec.metadata?.nearestCity || rec.metadata?.region || 'Global'}</strong>
+      </div>
     </div>
+
+    ${ecoHtml}
 
     <div class="card-nested" style="margin-bottom: 14px;">
       <div class="group-title">
@@ -690,6 +778,28 @@ function initTabs() {
 }
 
 function initEventListeners() {
+  // Global Region Quick Jump Scope
+  const REGION_COORDS = {
+    global: { center: [20.0, 15.0], zoom: 2.5 },
+    india: { center: [22.5, 80.0], zoom: 5 },
+    europe: { center: [50.0, 10.0], zoom: 4.5 },
+    'north-america': { center: [39.0, -98.0], zoom: 4 },
+    'asia-pacific': { center: [15.0, 115.0], zoom: 4 },
+    'me-africa': { center: [15.0, 40.0], zoom: 4 }
+  };
+
+  document.querySelectorAll('.region-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.region-chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const reg = btn.getAttribute('data-region');
+      const target = REGION_COORDS[reg];
+      if (target && state.map) {
+        state.map.flyTo(target.center, target.zoom, { duration: 1.2 });
+      }
+    });
+  });
+
   // Radius Slider
   const slider = document.getElementById('radiusSlider');
   slider?.addEventListener('input', (e) => {
