@@ -2,7 +2,10 @@
 
 > **Engineered by [Palash Tripathi](https://github.com/palasht251225)**  
 > *B.Tech Computer Science & Engineering (AI/ML) — Galgotias College of Engineering & Technology*  
-> LinkedIn: [palash-tripathi](https://www.linkedin.com/in/palash-tripathi-b4305627a) • Email: [Palashtripathi25@gmail.com](mailto:Palashtripathi25@gmail.com)
+> LinkedIn: [palash-tripathi](https://www.linkedin.com/in/palash-tripathi-b4305627a) • Email: [Palashtripathi25@gmail.com](mailto:Palashtripathi25@gmail.com)  
+> 
+> 🌐 **Live Production Deployment**: [https://geo-blockchain-platform.vercel.app/](https://geo-blockchain-platform.vercel.app/)  
+> 📦 **GitHub Repository**: [https://github.com/palasht251225/geo-blockchain-platform](https://github.com/palasht251225/geo-blockchain-platform)
 
 ---
 
